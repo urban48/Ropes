@@ -7,8 +7,11 @@
 package ropes;
 
 /**
- *
+ * code taken from: http://stackoverflow.com/questions/992019/java-256-bit-aes-password-based-encryption
+ * wufoo answer
  * @author Urban
+ * TODO: check http://www.aescrypt.com/ maybe have better implementation
+ * also to check PGP
  */
 
     import java.io.File;
@@ -165,7 +168,9 @@ package ropes;
     	public void setupDecrypt (String initvec, String salt) throws NoSuchAlgorithmException, 
     	                                                                                   InvalidKeySpecException, 
   	                                                                                   InvalidAlgorithmParameterException, 
-    	                                                                                   DecoderException
+    	                                                                                   DecoderException,
+    	                                                                                   NoSuchPaddingException,
+    	                                                                                   InvalidKeyException
     	{
     		SecretKeyFactory factory = null;
     		SecretKey tmp = null;

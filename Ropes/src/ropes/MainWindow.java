@@ -7,9 +7,11 @@
 package ropes;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -29,6 +31,8 @@ import javax.swing.JOptionPane;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 
 /**
  *
@@ -202,8 +206,6 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
 
-        jPasswordField_master_password.setEchoChar('*');
-
         jCheckBox_showPassword.setText("Show Password");
         jCheckBox_showPassword.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -338,11 +340,11 @@ public class MainWindow extends javax.swing.JFrame {
                 .addComponent(jProgressBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(72, 72, 72)
+                .addGap(52, 52, 52)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton_about, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addGap(31, 31, 31))
         );
 
         pack();
@@ -382,10 +384,14 @@ public class MainWindow extends javax.swing.JFrame {
          DefaultTreeModel model = (DefaultTreeModel) jTree_fileList.getModel();
          DefaultMutableTreeNode root = (DefaultMutableTreeNode) model.getRoot();          
          //get perent directory to see if such node exist
-         File parentDir = path.getParentFile();                 
-         DefaultMutableTreeNode node = findNode(root,parentDir.toString()) ;         
+         File perentDir = path.getParentFile();
+         
+         DefaultMutableTreeNode node = findNode(root,perentDir.toString()) ;         
          if(node != null)             
               node.add(new DefaultMutableTreeNode(path));
+         else{
+              root.add(new DefaultMutableTreeNode(path));
+         }
          //update jtree
          model.reload(root);         
 
@@ -550,9 +556,47 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        FileCompressor fCompress = new  FileCompressor();
-        Crypto crypt = new  Crypto("myPass");
         
+        String storeSpace_option = null;
+        
+        if(!validateFileds()){
+         JOptionPane.showMessageDialog(this, "Some fileds are invalid","Error", JOptionPane.WARNING_MESSAGE);
+         return;
+        }
+                
+        if(jRadioButton_allSpace.isSelected()){
+            storeSpace_option = "all avalible space";
+        }else{
+            storeSpace_option = String.valueOf(jSlider_size_select.getValue()) + " Mb of space";
+        }
+        
+        int dialogResult = JOptionPane.showConfirmDialog (null,"Are you sure you want to fill\n" + 
+                                                            storeSpace_option + 
+                                                            " at the media you selected:\n" + 
+                                                            jComboBox_media.getSelectedItem().toString(),"Warning",JOptionPane.YES_NO_OPTION);
+        if(dialogResult == JOptionPane.YES_OPTION){
+            //get all added files and perent directories 
+            DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)jTree_fileList.getModel().getRoot();
+            int chiledCount = rootNode.getChildCount();
+            for(int i =0; i<chiledCount;i++){
+                String path = jTree_fileList.getModel().getChild(rootNode, i).toString();
+                System.out.println(path);
+            }
+    
+        }
+
+        
+    }
+    private Boolean validateFileds(){
+        
+        return true;
+    }
+    private void preformEncryption(){
+       FileCompressor fCompress = new  FileCompressor();
+        Crypto crypt = new  Crypto("myPass");
+       
+       // fCompress.compressGzipFile("c:\\test.txt", "c:\\test.txt.gz");
+    
         try {
             crypt.setupEncrypt();
         } catch (NoSuchAlgorithmException ex) {
@@ -570,6 +614,44 @@ public class MainWindow extends javax.swing.JFrame {
         } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
         } catch (InvalidKeyException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        }   
+       /* try {
+            crypt.WriteEncryptedFile(new File("c:\\test.txt"), new File("c:\\test.txt.aes"));
+        } catch (IOException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalBlockSizeException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (BadPaddingException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        }*/
+        
+        
+ 
+        String b = Hex.encodeHexString(crypt.getInitVec());  
+        String c = Hex.encodeHexString(crypt.getSalt()); 
+        try {
+            crypt.setupDecrypt("924ef334ae4873e4b74f793d8fc0a9ba", "fd398cb023446e7b");
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvalidKeySpecException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvalidAlgorithmParameterException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (DecoderException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchPaddingException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvalidKeyException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        try {
+            crypt.ReadEncryptedFile(new File("c:\\test.txt.aes"), new File("c:\\test_out.txt"));
+        } catch (IOException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalBlockSizeException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (BadPaddingException ex) {
             Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jButton2ActionPerformed
