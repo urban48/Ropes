@@ -6,7 +6,10 @@
 
 package ropes;
 
+import de.tu_darmstadt.informatik.rbg.hatlak.iso9660.ConfigException;
+import de.tu_darmstadt.informatik.rbg.mhartle.sabre.HandlerException;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
@@ -560,8 +563,8 @@ public class MainWindow extends javax.swing.JFrame {
         String storeSpace_option = null;
         
         if(!validateFileds()){
-         JOptionPane.showMessageDialog(this, "Some fileds are invalid","Error", JOptionPane.WARNING_MESSAGE);
-         return;
+            JOptionPane.showMessageDialog(this, "Some fileds are invalid","Error", JOptionPane.WARNING_MESSAGE);
+            return;
         }
                 
         if(jRadioButton_allSpace.isSelected()){
@@ -582,6 +585,7 @@ public class MainWindow extends javax.swing.JFrame {
                 String path = jTree_fileList.getModel().getChild(rootNode, i).toString();
                 System.out.println(path);
             }
+
     
         }
 
@@ -594,66 +598,15 @@ public class MainWindow extends javax.swing.JFrame {
     private void preformEncryption(){
        FileCompressor fCompress = new  FileCompressor();
         Crypto crypt = new  Crypto("myPass");
-       
-       // fCompress.compressGzipFile("c:\\test.txt", "c:\\test.txt.gz");
-    
-        try {
-            crypt.setupEncrypt();
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidKeySpecException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchPaddingException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidParameterSpecException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IllegalBlockSizeException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (BadPaddingException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidKeyException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        }   
-       /* try {
-            crypt.WriteEncryptedFile(new File("c:\\test.txt"), new File("c:\\test.txt.aes"));
-        } catch (IOException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IllegalBlockSizeException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (BadPaddingException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        }*/
-        
-        
- 
+        crypt.setupEncrypt();
+      
+
         String b = Hex.encodeHexString(crypt.getInitVec());  
         String c = Hex.encodeHexString(crypt.getSalt()); 
-        try {
-            crypt.setupDecrypt("924ef334ae4873e4b74f793d8fc0a9ba", "fd398cb023446e7b");
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidKeySpecException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidAlgorithmParameterException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (DecoderException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchPaddingException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidKeyException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        try {
-            crypt.ReadEncryptedFile(new File("c:\\test.txt.aes"), new File("c:\\test_out.txt"));
-        } catch (IOException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IllegalBlockSizeException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (BadPaddingException ex) {
-            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
+        crypt.setupDecrypt("924ef334ae4873e4b74f793d8fc0a9ba", "fd398cb023446e7b");
+        crypt.ReadEncryptedFile(new File("c:\\test.txt.aes"), new File("c:\\test_out.txt"));
+
     }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
