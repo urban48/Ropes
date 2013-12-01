@@ -6,35 +6,23 @@
 
 package ropes;
 
-import de.tu_darmstadt.informatik.rbg.hatlak.iso9660.ConfigException;
-import de.tu_darmstadt.informatik.rbg.mhartle.sabre.HandlerException;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.InvalidParameterSpecException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
 /**
@@ -48,6 +36,7 @@ public class MainWindow extends javax.swing.JFrame {
      */
 
     private int privMediaSelection;
+    private String workingDir = System.getProperty("user.dir")+ "\\Ropes\\";
     public MainWindow() {
         initComponents();
 
@@ -561,6 +550,7 @@ public class MainWindow extends javax.swing.JFrame {
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         
         String storeSpace_option = null;
+        List<File> files = new ArrayList<File>();
         
         if(!validateFileds()){
             JOptionPane.showMessageDialog(this, "Some fileds are invalid","Error", JOptionPane.WARNING_MESSAGE);
@@ -583,10 +573,11 @@ public class MainWindow extends javax.swing.JFrame {
             int chiledCount = rootNode.getChildCount();
             for(int i =0; i<chiledCount;i++){
                 String path = jTree_fileList.getModel().getChild(rootNode, i).toString();
+                files.add(new File(path));
                 System.out.println(path);
             }
-
-    
+              
+              encryptAndCompress("pass", files);
         }
 
         
@@ -595,18 +586,39 @@ public class MainWindow extends javax.swing.JFrame {
         
         return true;
     }
-    private void preformEncryption(){
-       FileCompressor fCompress = new  FileCompressor();
-        Crypto crypt = new  Crypto("myPass");
-        crypt.setupEncrypt();
-      
-
-        String b = Hex.encodeHexString(crypt.getInitVec());  
-        String c = Hex.encodeHexString(crypt.getSalt()); 
-
-        crypt.setupDecrypt("924ef334ae4873e4b74f793d8fc0a9ba", "fd398cb023446e7b");
-        crypt.ReadEncryptedFile(new File("c:\\test.txt.aes"), new File("c:\\test_out.txt"));
-
+    private void encryptAndCompress(String password, List<File> inFiles){
+        //initilize compression class
+        FileCompressor fCompress = new  FileCompressor(new File(workingDir + "archive.zip"));
+        for(File file:inFiles){
+            fCompress.compressZipFile(file,"");
+        }
+        try {
+            fCompress.zos.close();
+            //fCompress.decompressZipFile(workingDir + "archive.zip", "c:\\");
+            
+            //initilize cypto class
+            /*  Crypto crypt = new  Crypto(password);
+            crypt.setupEncrypt();
+            
+            String initIv = Hex.encodeHexString(crypt.getInitVec());
+            String salt = Hex.encodeHexString(crypt.getSalt());
+            for(String inFile:inFiles){
+            File file = new File(inFile);
+            //create directory if dont exist
+            File directory = new File(new File(workingDir).getAbsolutePath());
+            directory.mkdirs();
+            
+            String inFile_name = file.getName();
+            crypt.WriteEncryptedFile(file, new File(workingDir+ inFile_name+".aes"));
+            
+            crypt.setupDecrypt(initIv, salt);
+            crypt.ReadEncryptedFile(new File(workingDir+ inFile_name+".aes"),new File(workingDir + inFile_name));
+            }
+            
+            System.out.println("files in: " +workingDir );
+        */} catch (IOException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
