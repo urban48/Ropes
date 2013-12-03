@@ -109,15 +109,12 @@ public class FileCompressor {
      //taken from https://blogs.oracle.com/CoreJavaTechTips/entry/creating_zip_and_jar_files
     public void compressZipFile(File file, String base) {
         
-      try {
-
-          
+      try {    
           if(zos == null){
              System.err.println("Please use the right constractor: FileCompressor(File outputPath)");
              return;
           }
-          
-          
+
           int bytesRead;
           byte[] buffer = new byte[1024];
           CRC32 crc = new CRC32();

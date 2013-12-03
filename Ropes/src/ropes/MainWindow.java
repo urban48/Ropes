@@ -6,6 +6,8 @@
 
 package ropes;
 
+import com.sun.jmx.snmp.BerDecoder;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -21,9 +23,11 @@ import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import org.apache.commons.codec.binary.Hex;
+import ropes.SystemInfo.MediaInfo;
 
 /**
  *
@@ -37,9 +41,13 @@ public class MainWindow extends javax.swing.JFrame {
 
     private int privMediaSelection;
     private String workingDir = System.getProperty("user.dir")+ "\\Ropes\\";
+    private Boolean cdromSelected = false;
+    private Map<String, MediaInfo> drives = null;
     public MainWindow() {
         initComponents();
-
+        //initilize media drives
+        SystemInfo info = new SystemInfo();
+        drives = info.getMediaDrives();
 
     }
 
@@ -66,12 +74,11 @@ public class MainWindow extends javax.swing.JFrame {
         jSlider_size_select = new javax.swing.JSlider();
         jRadioButton_store = new javax.swing.JRadioButton();
         jRadioButton_retrive = new javax.swing.JRadioButton();
-        jButton2 = new javax.swing.JButton();
+        jButton_write = new javax.swing.JButton();
         jProgressBar1 = new javax.swing.JProgressBar();
         jLabel3 = new javax.swing.JLabel();
         jButton3 = new javax.swing.JButton();
         jButton_changePath = new javax.swing.JButton();
-        jLabel_slider_value = new javax.swing.JLabel();
         jButton_clear_fileList = new javax.swing.JButton();
         jPasswordField_master_password = new javax.swing.JPasswordField();
         jCheckBox_showPassword = new javax.swing.JCheckBox();
@@ -80,6 +87,9 @@ public class MainWindow extends javax.swing.JFrame {
         jButton4 = new javax.swing.JButton();
         jButton_about = new javax.swing.JButton();
         jLabel_path = new javax.swing.JLabel();
+        jButton_test = new javax.swing.JButton();
+        jTextField_sliderValue = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
 
         javax.swing.GroupLayout jFrame1Layout = new javax.swing.GroupLayout(jFrame1.getContentPane());
         jFrame1.getContentPane().setLayout(jFrame1Layout);
@@ -165,10 +175,10 @@ public class MainWindow extends javax.swing.JFrame {
         jRadioButton_retrive.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         jRadioButton_retrive.setText("retrive");
 
-        jButton2.setText("write");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        jButton_write.setText("write");
+        jButton_write.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                jButton_writeActionPerformed(evt);
             }
         });
 
@@ -188,8 +198,6 @@ public class MainWindow extends javax.swing.JFrame {
                 jButton_changePathActionPerformed(evt);
             }
         });
-
-        jLabel_slider_value.setEnabled(false);
 
         jButton_clear_fileList.setText("Clear");
         jButton_clear_fileList.addActionListener(new java.awt.event.ActionListener() {
@@ -226,6 +234,25 @@ public class MainWindow extends javax.swing.JFrame {
         jLabel_path.setToolTipText("");
         jLabel_path.setMaximumSize(new java.awt.Dimension(231, 14));
         jLabel_path.setMinimumSize(new java.awt.Dimension(22, 22));
+
+        jButton_test.setText("test");
+        jButton_test.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton_testActionPerformed(evt);
+            }
+        });
+
+        jTextField_sliderValue.setEnabled(false);
+        jTextField_sliderValue.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                jTextField_sliderValueKeyReleased(evt);
+            }
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                jTextField_sliderValueKeyTyped(evt);
+            }
+        });
+
+        jLabel4.setText("MB");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -266,7 +293,9 @@ public class MainWindow extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jRadioButton_allSpace)
                                 .addGap(18, 18, 18)
-                                .addComponent(jLabel_slider_value))
+                                .addComponent(jTextField_sliderValue, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel4))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel2)
@@ -282,8 +311,10 @@ public class MainWindow extends javax.swing.JFrame {
                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
             .addGroup(layout.createSequentialGroup()
-                .addGap(96, 96, 96)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(5, 5, 5)
+                .addComponent(jButton_test)
+                .addGap(18, 18, 18)
+                .addComponent(jButton_write, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -294,27 +325,27 @@ public class MainWindow extends javax.swing.JFrame {
                     .addComponent(jRadioButton_retrive, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
                     .addComponent(jRadioButton_store, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(13, 13, 13)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jComboBox_media, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1))
-                .addGap(2, 2, 2)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton_changePath)
-                    .addComponent(jLabel_path, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(jPasswordField_master_password, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(19, 19, 19)
-                        .addComponent(jLabel3))
-                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jComboBox_media, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel1))
+                        .addGap(2, 2, 2)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jButton_changePath)
+                            .addComponent(jLabel_path, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel2)
+                            .addComponent(jPasswordField_master_password, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(19, 19, 19)
+                                .addComponent(jLabel3))
+                            .addGroup(layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jCheckBox_showPassword)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jCheckBox_showPassword)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -322,16 +353,19 @@ public class MainWindow extends javax.swing.JFrame {
                             .addComponent(jButton_clear_fileList)
                             .addComponent(jButton4))
                         .addGap(27, 27, 27)
-                        .addComponent(jRadioButton_allSpace))
-                    .addComponent(jLabel_slider_value, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSlider_size_select, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jRadioButton_partSpace, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(jProgressBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jRadioButton_allSpace)
+                            .addComponent(jTextField_sliderValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel4))
+                        .addGap(6, 6, 6)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jSlider_size_select, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jRadioButton_partSpace, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
+                        .addComponent(jProgressBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton_write, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jButton_test))
                 .addGap(52, 52, 52)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -419,20 +453,15 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
-               SystemInfo info = new SystemInfo();
-               Map drives = info.getMediaDrives();
-               Iterator it = drives.entrySet().iterator();
-               while(it.hasNext()){
-                   Map.Entry pairs = (Map.Entry)it.next();
-                   SystemInfo.MediaInfo mi = (SystemInfo.MediaInfo)pairs.getValue();                  
-                   jComboBox_media.addItem(pairs.getKey() + "  -  " + mi.description);
-                   it.remove();
-                  
-               }   
-                //set some controll values
+
+                for(Map.Entry<String, MediaInfo > drive:drives.entrySet()){
+                    
+                    jComboBox_media.addItem(drive.getKey() + "  -  " + drive.getValue().description);
+                }
+                 //set some controll values
                 jTree_fileList.setRootVisible(false);
                 jTree_fileList.setShowsRootHandles(true); 
-                jLabel_path.setText(getSelectedPathFromCMB());
+               
                 
                
     }//GEN-LAST:event_formWindowOpened
@@ -441,24 +470,32 @@ public class MainWindow extends javax.swing.JFrame {
 
        //reset controlls
       jSlider_size_select.setValue(0);
-      jLabel_slider_value.setText("0 Mb");
-  
-      SystemInfo info = new SystemInfo();
-      //TODO make drives global var
-      Map drives = info.getMediaDrives();    
+      jTextField_sliderValue.setText("0");
+      
       //gets the string of the meda drivev selected
       String selected = getSelectedPathFromCMB();
-      //get avalible space of selected drive
-      Integer maxSize = ((SystemInfo.MediaInfo)drives.get(selected)).freeSpace;
-      
-      jSlider_size_select.setMaximum(maxSize);
-      jLabel_path.setText(getSelectedPathFromCMB());
+      //turn flag on if CD Rom selected
 
+
+      //get avalible space of selected drive
+      MediaInfo mi = (MediaInfo)drives.get(selected);
+      
+      if( mi.description.contains("CD Drive")){
+          cdromSelected = true;
+          cdRomMode();
+      }else{
+          cdromSelected = false;
+          normalMode();
+      }
+
+      jSlider_size_select.setMaximum(mi.freeSpace);
+      jLabel_path.setText(mi.path);
+       
       
       //Create the label table
       Hashtable labelTable = new Hashtable();
       labelTable.put( new Integer( 0 ), new JLabel("0 Mb") );
-      labelTable.put( new Integer( maxSize ), new JLabel(String.valueOf(maxSize) + " Mb") );
+      labelTable.put( new Integer( mi.freeSpace ), new JLabel(String.valueOf(mi.freeSpace) + " Mb") );
       jSlider_size_select.setLabelTable( labelTable );
       jSlider_size_select.setPaintLabels(true);
     
@@ -466,23 +503,35 @@ public class MainWindow extends javax.swing.JFrame {
       privMediaSelection = jComboBox_media.getSelectedIndex();
     }//GEN-LAST:event_jComboBox_mediaActionPerformed
 
+    private void cdRomMode(){
+        jButton_write.setText("Create ISO");
+        jRadioButton_allSpace.setEnabled(false);
+        jRadioButton_partSpace.setSelected(true);
+        System.out.println("here");
+    }
+    private void normalMode(){
+        jButton_write.setText("Write");
+         jRadioButton_allSpace.setEnabled(true);
+         jRadioButton_allSpace.setSelected(true);
+    }
+    
     private String getSelectedPathFromCMB(){
-       return jComboBox_media.getSelectedItem().toString().split("-")[0].replaceAll("\\s+","");
+       return jComboBox_media.getSelectedItem().toString().split(" - ")[0].trim();//replaceAll("\\s+","");
     }
     
     private void jRadioButton_partSpaceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton_partSpaceActionPerformed
         jSlider_size_select.setEnabled(true);
-        jLabel_slider_value.setEnabled(true);
+        jTextField_sliderValue.setEnabled(true);
     }//GEN-LAST:event_jRadioButton_partSpaceActionPerformed
 
     private void jRadioButton_allSpaceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton_allSpaceActionPerformed
         jSlider_size_select.setEnabled(false);
-        jLabel_slider_value.setEnabled(false);
+        jTextField_sliderValue.setEnabled(false);
         
     }//GEN-LAST:event_jRadioButton_allSpaceActionPerformed
 
     private void jSlider_size_selectStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSlider_size_selectStateChanged
-        jLabel_slider_value.setText(String.valueOf(jSlider_size_select.getValue()) + " Mb");
+        jTextField_sliderValue.setText(String.valueOf(jSlider_size_select.getValue()));
     }//GEN-LAST:event_jSlider_size_selectStateChanged
 
     private void jCheckBox_showPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox_showPasswordActionPerformed
@@ -547,7 +596,7 @@ public class MainWindow extends javax.swing.JFrame {
 
     }//GEN-LAST:event_jButton4ActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void jButton_writeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_writeActionPerformed
         
         String storeSpace_option = null;
         List<File> files = new ArrayList<File>();
@@ -576,8 +625,13 @@ public class MainWindow extends javax.swing.JFrame {
                 files.add(new File(path));
                 System.out.println(path);
             }
-              
-              encryptAndCompress("pass", files);
+             if(validateFileds()){
+                compressAndEncrypt(jPasswordField_master_password.getPassword().toString(), files); 
+             }else{
+                 System.err.println("some fields are invalid");
+                 return;
+             } 
+            
         }
 
         
@@ -586,40 +640,74 @@ public class MainWindow extends javax.swing.JFrame {
         
         return true;
     }
-    private void encryptAndCompress(String password, List<File> inFiles){
+    
+    private void compressAndEncrypt(String password, List<File> inFiles){
+        File archivePath = new File(workingDir + "archive.zip");
+        File encryptPath = new File(workingDir+ archivePath.getName()+".aes");
         //initilize compression class
-        FileCompressor fCompress = new  FileCompressor(new File(workingDir + "archive.zip"));
+        FileCompressor fCompress = new  FileCompressor(archivePath);
+        //preforming compression
         for(File file:inFiles){
             fCompress.compressZipFile(file,"");
         }
         try {
+            //close output stream
             fCompress.zos.close();
-            //fCompress.decompressZipFile(workingDir + "archive.zip", "c:\\");
-            
-            //initilize cypto class
-            /*  Crypto crypt = new  Crypto(password);
-            crypt.setupEncrypt();
-            
-            String initIv = Hex.encodeHexString(crypt.getInitVec());
-            String salt = Hex.encodeHexString(crypt.getSalt());
-            for(String inFile:inFiles){
-            File file = new File(inFile);
-            //create directory if dont exist
-            File directory = new File(new File(workingDir).getAbsolutePath());
-            directory.mkdirs();
-            
-            String inFile_name = file.getName();
-            crypt.WriteEncryptedFile(file, new File(workingDir+ inFile_name+".aes"));
-            
-            crypt.setupDecrypt(initIv, salt);
-            crypt.ReadEncryptedFile(new File(workingDir+ inFile_name+".aes"),new File(workingDir + inFile_name));
-            }
-            
-            System.out.println("files in: " +workingDir );
-        */} catch (IOException ex) {
+        } catch (IOException ex) {
             Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }//GEN-LAST:event_jButton2ActionPerformed
+        System.out.println("file compression, done: " + archivePath);
+        //initilize cypto class
+        Crypto crypt = new  Crypto(password);
+        crypt.setupEncrypt();
+         //store IV and salt for decryption
+        String initIv = Hex.encodeHexString(crypt.getInitVec());
+        String salt = Hex.encodeHexString(crypt.getSalt());
+         
+        //encrypy out created archive
+        crypt.WriteEncryptedFile(archivePath, encryptPath );
+        System.out.println("file encryption, done: " + encryptPath);
+        
+        
+
+    }//GEN-LAST:event_jButton_writeActionPerformed
+
+    private void jButton_testActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_testActionPerformed
+        
+        test t = new test();
+        t.getDrives();
+               
+    }//GEN-LAST:event_jButton_testActionPerformed
+
+    private void jTextField_sliderValueKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextField_sliderValueKeyTyped
+        char c = evt.getKeyChar(); 
+        String txtVal = jTextField_sliderValue.getText();
+        if(txtVal.equals("") && (c== KeyEvent.VK_BACK_SPACE || c== KeyEvent.VK_DELETE)){
+           evt.consume();
+           return;
+        }
+        if(!"".equals(txtVal)){
+            if(! (Character.isDigit(c) || c== KeyEvent.VK_BACK_SPACE || c== KeyEvent.VK_DELETE) || jSlider_size_select.getMaximum() <= Integer.valueOf(txtVal) ){
+                evt.consume();
+            }else{
+
+                if(Integer.valueOf(txtVal) == 0)
+                   jTextField_sliderValue.setText("");
+            }
+        }
+        
+        //Integer textFieldVal = Integer.valueOf(jTextField_sliderValue.getText());
+       // jSlider_size_select.setValue(WIDTH);
+    }//GEN-LAST:event_jTextField_sliderValueKeyTyped
+
+    private void jTextField_sliderValueKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextField_sliderValueKeyReleased
+        JTextField txt = (JTextField) evt.getSource();
+        if(txt.getText().equals("")){
+            txt.setText("0");
+            return;
+        }
+        jSlider_size_select.setValue(Integer.valueOf(txt.getText()));
+    }//GEN-LAST:event_jTextField_sliderValueKeyReleased
 
     /**
      * @param args the command line arguments
@@ -660,20 +748,21 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.ButtonGroup buttonGroup_store_retrive;
     private javax.swing.ButtonGroup buttonGroup_store_size_select;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton_about;
     private javax.swing.JButton jButton_changePath;
     private javax.swing.JButton jButton_clear_fileList;
+    private javax.swing.JButton jButton_test;
+    private javax.swing.JButton jButton_write;
     private javax.swing.JCheckBox jCheckBox_showPassword;
     private javax.swing.JComboBox jComboBox_media;
     private javax.swing.JFrame jFrame1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel_path;
-    private javax.swing.JLabel jLabel_slider_value;
     private javax.swing.JPasswordField jPasswordField_master_password;
     private javax.swing.JProgressBar jProgressBar1;
     private javax.swing.JRadioButton jRadioButton_allSpace;
@@ -683,6 +772,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSlider jSlider_size_select;
+    private javax.swing.JTextField jTextField_sliderValue;
     private javax.swing.JTree jTree1;
     private javax.swing.JTree jTree_fileList;
     // End of variables declaration//GEN-END:variables
