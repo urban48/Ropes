@@ -44,7 +44,7 @@ public class SystemInfo {
 
     
     
-    private Integer getFreeSpaceMB(Long val){
+    public Integer getFreeSpaceMB(Long val){
             Double size_inBytes = val / (Math.pow(1024,2));
             return size_inBytes.intValue();
     }

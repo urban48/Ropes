@@ -268,16 +268,16 @@ public class MainWindow extends javax.swing.JFrame {
                         .addComponent(jButton4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButton_clear_fileList))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jRadioButton_partSpace, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jSlider_size_select, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(jProgressBar1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jLabel_path, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, Short.MAX_VALUE)
                         .addComponent(jButton_changePath)
                         .addGap(9, 9, 9))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jButton_about, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -306,9 +306,9 @@ public class MainWindow extends javax.swing.JFrame {
                                     .addComponent(jCheckBox_showPassword))))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton_about, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jRadioButton_partSpace, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jSlider_size_select, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
             .addGroup(layout.createSequentialGroup()
                 .addGap(5, 5, 5)
@@ -479,6 +479,8 @@ public class MainWindow extends javax.swing.JFrame {
 
       //get avalible space of selected drive
       MediaInfo mi = (MediaInfo)drives.get(selected);
+      jSlider_size_select.setMaximum(mi.freeSpace);
+      jLabel_path.setText(mi.path);
       
       if( mi.description.contains("CD Drive")){
           cdromSelected = true;
@@ -488,31 +490,50 @@ public class MainWindow extends javax.swing.JFrame {
           normalMode();
       }
 
-      jSlider_size_select.setMaximum(mi.freeSpace);
-      jLabel_path.setText(mi.path);
+
        
-      
+      if(!cdromSelected){
       //Create the label table
-      Hashtable labelTable = new Hashtable();
-      labelTable.put( new Integer( 0 ), new JLabel("0 Mb") );
-      labelTable.put( new Integer( mi.freeSpace ), new JLabel(String.valueOf(mi.freeSpace) + " Mb") );
-      jSlider_size_select.setLabelTable( labelTable );
-      jSlider_size_select.setPaintLabels(true);
+        Hashtable labelTable = new Hashtable();
+        labelTable.put( new Integer( 0 ), new JLabel("0 Mb") );
+        labelTable.put( new Integer( mi.freeSpace ), new JLabel(String.valueOf(mi.freeSpace) + " Mb") );
+        jSlider_size_select.setLabelTable(labelTable );
+        jSlider_size_select.setPaintLabels(true);
+      }
     
-      //remeber last select
+      //remember last select
       privMediaSelection = jComboBox_media.getSelectedIndex();
     }//GEN-LAST:event_jComboBox_mediaActionPerformed
 
     private void cdRomMode(){
+        SystemInfo si = new SystemInfo();
+        
         jButton_write.setText("Create ISO");
         jRadioButton_allSpace.setEnabled(false);
         jRadioButton_partSpace.setSelected(true);
-        System.out.println("here");
+        jTextField_sliderValue.setEnabled(true);
+        jSlider_size_select.setEnabled(true);
+
+      //Create the label table
+        
+        
+        Integer dvdValMB =  si.getFreeSpaceMB((long)Math.pow(2, 32) - 1);
+        jSlider_size_select.setMaximum(dvdValMB);
+        
+        Hashtable labelTable = new Hashtable(); 
+        labelTable.put( new Integer( 0 ), new JLabel("0 Mb") );
+        labelTable.put( new Integer( dvdValMB ), new JLabel("700 Mb") );
+        labelTable.put( new Integer( 730 ), new JLabel("CD  700Mb") );
+        labelTable.put( new Integer( dvdValMB ), new JLabel("DVD 4.2 GB") );
+        jSlider_size_select.setLabelTable(labelTable );
+        jSlider_size_select.setPaintLabels(true);
+
     }
     private void normalMode(){
         jButton_write.setText("Write");
          jRadioButton_allSpace.setEnabled(true);
          jRadioButton_allSpace.setSelected(true);
+         jTextField_sliderValue.setEnabled(true);
     }
     
     private String getSelectedPathFromCMB(){
@@ -673,9 +694,12 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton_writeActionPerformed
 
     private void jButton_testActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_testActionPerformed
-        
-        test t = new test();
-        t.getDrives();
+         jSlider_size_select.setMaximum(12347);        
+        Hashtable labelTable = new Hashtable();
+        labelTable.put( new Integer( 0 ), new JLabel("0 Mb") );
+        labelTable.put( new Integer( 12347 ), new JLabel(String.valueOf(1234) + " Mb") );
+        jSlider_size_select.setLabelTable(labelTable );
+        jSlider_size_select.setPaintLabels(true);
                
     }//GEN-LAST:event_jButton_testActionPerformed
 
