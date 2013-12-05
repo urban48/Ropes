@@ -23,11 +23,13 @@ import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import org.apache.commons.codec.binary.Hex;
 import ropes.SystemInfo.MediaInfo;
+
 
 /**
  *
@@ -156,7 +158,6 @@ public class MainWindow extends javax.swing.JFrame {
         jSlider_size_select.setMajorTickSpacing(100);
         jSlider_size_select.setMaximum(1000);
         jSlider_size_select.setMinorTickSpacing(10);
-        jSlider_size_select.setPaintTicks(true);
         jSlider_size_select.setToolTipText("");
         jSlider_size_select.setValue(0);
         jSlider_size_select.setEnabled(false);
@@ -517,16 +518,20 @@ public class MainWindow extends javax.swing.JFrame {
       //Create the label table
         
         
-        Integer dvdValMB =  si.getFreeSpaceMB((long)Math.pow(2, 32) - 1);
-        jSlider_size_select.setMaximum(dvdValMB);
+        Integer dvdValMB =  si.getFreeSpaceMB(new Long("4294967295")); //(2^32 -1) max dvd size
+        
+        //map logoritmic sacale to jslider so everything will fit
+        
+             
+        jSlider_size_select.setMaximum( 4); //log10(4096) = 3.612
         
         Hashtable labelTable = new Hashtable(); 
         labelTable.put( new Integer( 0 ), new JLabel("0 Mb") );
-        labelTable.put( new Integer( dvdValMB ), new JLabel("700 Mb") );
-        labelTable.put( new Integer( 730 ), new JLabel("CD  700Mb") );
+        labelTable.put( new Integer( 730 ), new JLabel("CD 700Mb") );
         labelTable.put( new Integer( dvdValMB ), new JLabel("DVD 4.2 GB") );
         jSlider_size_select.setLabelTable(labelTable );
         jSlider_size_select.setPaintLabels(true);
+         jSlider_size_select.setSnapToTicks(true);
 
     }
     private void normalMode(){
@@ -552,7 +557,7 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_jRadioButton_allSpaceActionPerformed
 
     private void jSlider_size_selectStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSlider_size_selectStateChanged
-        jTextField_sliderValue.setText(String.valueOf(jSlider_size_select.getValue()));
+        jTextField_sliderValue.setText(String.valueOf(Math.pow(10,jSlider_size_select.getValue())));
     }//GEN-LAST:event_jSlider_size_selectStateChanged
 
     private void jCheckBox_showPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox_showPasswordActionPerformed
@@ -694,12 +699,16 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton_writeActionPerformed
 
     private void jButton_testActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_testActionPerformed
-         jSlider_size_select.setMaximum(12347);        
-        Hashtable labelTable = new Hashtable();
-        labelTable.put( new Integer( 0 ), new JLabel("0 Mb") );
-        labelTable.put( new Integer( 12347 ), new JLabel(String.valueOf(1234) + " Mb") );
-        jSlider_size_select.setLabelTable(labelTable );
-        jSlider_size_select.setPaintLabels(true);
+        
+        JSlider slider  = new LogarithmicJSlider(100, 10000000, 1000);
+                slider.setPaintTicks(true);
+        slider.setPaintLabels(true);
+        slider.setMajorTickSpacing(10);
+        slider.setMinorTickSpacing(10);
+        
+        getContentPane().add(slider);
+       // getContentPane().repaint();
+        //this.add(slider);
                
     }//GEN-LAST:event_jButton_testActionPerformed
 
