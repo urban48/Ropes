@@ -50,6 +50,8 @@ public class IsoCreator {
         
         private ISO9660RootDirectory root = new ISO9660RootDirectory();
         
+        
+        
         private ISO9660Config iso9660Config = new ISO9660Config();
         
         private Boolean files_added = false; 
@@ -112,25 +114,35 @@ public class IsoCreator {
                     Logger.getLogger(IsoCreator.class.getName()).log(Level.SEVERE, null, ex);
                 }
         }
-        public void addFiles(File path){//for adding standard
+        public void addFiles(File path, Long numOfFiles){//for adding standard
+            ISO9660Directory  idir = new ISO9660Directory("0");
+            Integer fileCounter = numOfFiles.intValue();
             if (path != null) {
-
                 // Add file or directory contents recursively
                 if (path.exists()) {
+                    while(!fileCounter.equals(0)){
+                        if((fileCounter % 1000) == 0){
+                             root.addDirectory(idir);
+                             idir = new ISO9660Directory(String.valueOf(numOfFiles/1000)); 
+                        }
                         if (path.isDirectory()) {
                             try {
-                                root.addContentsRecursively(path);
+                                idir.addContentsRecursively(path);
                             } catch (HandlerException ex) {
                                 Logger.getLogger(IsoCreator.class.getName()).log(Level.SEVERE, null, ex);
                             }
                         } else {
-                            try {
-                                root.addFile(path);
+                            try {                    
+                                idir.addFile(path);
                             } catch (HandlerException ex) {
                                 Logger.getLogger(IsoCreator.class.getName()).log(Level.SEVERE, null, ex);
                             }
                         }
-                        files_added = true;
+                        fileCounter--;
+                        
+                    }
+                    root.addDirectory(idir);
+                    files_added = true;
                 }                           
              }
           }
@@ -141,6 +153,7 @@ public class IsoCreator {
                     StreamHandler streamHandler = new ISOImageFileHandler(output);
                     CreateISO iso = new CreateISO(streamHandler, root);
                     iso.process(iso9660Config, rrConfig, jolietConfig, elToritoConfig);
+                    streamHandler = null;
                     System.out.println("Done. File is: " + output);
                 } catch (FileNotFoundException ex) {
                     Logger.getLogger(IsoCreator.class.getName()).log(Level.SEVERE, null, ex);

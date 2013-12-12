@@ -7,12 +7,18 @@
 package ropes;
 
 import com.sun.jmx.snmp.BerDecoder;
+import de.tu_darmstadt.informatik.rbg.hatlak.iso9660.ISO9660Directory;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -45,6 +51,8 @@ public class MainWindow extends javax.swing.JFrame {
     private String workingDir = System.getProperty("user.dir")+ "\\Ropes\\";
     private Boolean cdromSelected = false;
     private Map<String, MediaInfo> drives = null;
+    String initIv ="";
+    String salt = "";
     public MainWindow() {
         initComponents();
         //initilize media drives
@@ -157,7 +165,8 @@ public class MainWindow extends javax.swing.JFrame {
 
         jSlider_size_select.setMajorTickSpacing(100);
         jSlider_size_select.setMaximum(1000);
-        jSlider_size_select.setMinorTickSpacing(10);
+        jSlider_size_select.setMinorTickSpacing(1);
+        jSlider_size_select.setPaintTicks(true);
         jSlider_size_select.setToolTipText("");
         jSlider_size_select.setValue(0);
         jSlider_size_select.setEnabled(false);
@@ -523,7 +532,7 @@ public class MainWindow extends javax.swing.JFrame {
         //map logoritmic sacale to jslider so everything will fit
         
              
-        jSlider_size_select.setMaximum( 4); //log10(4096) = 3.612
+        jSlider_size_select.setMaximum( 1400); //log10(4096) = 3.612
         
         Hashtable labelTable = new Hashtable(); 
         labelTable.put( new Integer( 0 ), new JLabel("0 Mb") );
@@ -531,14 +540,15 @@ public class MainWindow extends javax.swing.JFrame {
         labelTable.put( new Integer( dvdValMB ), new JLabel("DVD 4.2 GB") );
         jSlider_size_select.setLabelTable(labelTable );
         jSlider_size_select.setPaintLabels(true);
-         jSlider_size_select.setSnapToTicks(true);
+        jSlider_size_select.setSnapToTicks(true);
 
     }
     private void normalMode(){
-        jButton_write.setText("Write");
+         jButton_write.setText("Write");
          jRadioButton_allSpace.setEnabled(true);
          jRadioButton_allSpace.setSelected(true);
          jTextField_sliderValue.setEnabled(true);
+         jTextField_sliderValue.setEnabled(false);
     }
     
     private String getSelectedPathFromCMB(){
@@ -557,7 +567,7 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_jRadioButton_allSpaceActionPerformed
 
     private void jSlider_size_selectStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSlider_size_selectStateChanged
-        jTextField_sliderValue.setText(String.valueOf(Math.pow(10,jSlider_size_select.getValue())));
+        jTextField_sliderValue.setText(String.valueOf(jSlider_size_select.getValue()));
     }//GEN-LAST:event_jSlider_size_selectStateChanged
 
     private void jCheckBox_showPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox_showPasswordActionPerformed
@@ -625,6 +635,7 @@ public class MainWindow extends javax.swing.JFrame {
     private void jButton_writeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_writeActionPerformed
         
         String storeSpace_option = null;
+        File encrypted_file = null;
         List<File> files = new ArrayList<File>();
         
         if(!validateFileds()){
@@ -652,11 +663,23 @@ public class MainWindow extends javax.swing.JFrame {
                 System.out.println(path);
             }
              if(validateFileds()){
-                compressAndEncrypt(jPasswordField_master_password.getPassword().toString(), files); 
+                 encrypted_file =  compressAndEncrypt(String.valueOf(jPasswordField_master_password.getPassword()), files); 
              }else{
                  System.err.println("some fields are invalid");
                  return;
-             } 
+             }
+             
+              Double size_select_bytes = jSlider_size_select.getValue() * Math.pow(1024,2);
+              Long size_select = size_select_bytes.longValue();           
+              if(encrypted_file.exists()){
+                  Long fileSize = encrypted_file.length();
+                  if(jRadioButton_allSpace.isSelected()){
+                      size_select_bytes = jSlider_size_select.getMaximum() * Math.pow(1024,2);
+                      createIso(encrypted_file,size_select_bytes.longValue(),initIv,salt);
+                  }
+                  else if(size_select > 0 && size_select > fileSize)
+                      createIso(encrypted_file, size_select,initIv,salt);
+              }
             
         }
 
@@ -667,7 +690,7 @@ public class MainWindow extends javax.swing.JFrame {
         return true;
     }
     
-    private void compressAndEncrypt(String password, List<File> inFiles){
+    private File compressAndEncrypt(String password, List<File> inFiles){
         File archivePath = new File(workingDir + "archive.zip");
         File encryptPath = new File(workingDir+ archivePath.getName()+".aes");
         //initilize compression class
@@ -687,28 +710,51 @@ public class MainWindow extends javax.swing.JFrame {
         Crypto crypt = new  Crypto(password);
         crypt.setupEncrypt();
          //store IV and salt for decryption
-        String initIv = Hex.encodeHexString(crypt.getInitVec());
-        String salt = Hex.encodeHexString(crypt.getSalt());
+         initIv = Hex.encodeHexString(crypt.getInitVec());
+         salt = Hex.encodeHexString(crypt.getSalt());
          
         //encrypy out created archive
         crypt.WriteEncryptedFile(archivePath, encryptPath );
         System.out.println("file encryption, done: " + encryptPath);
+        return encryptPath;
         
         
 
     }//GEN-LAST:event_jButton_writeActionPerformed
 
+        private void createIso(File file,Long size, String initIV, String salt){
+        IsoCreator ic = new IsoCreator();
+        String timeStamp = new SimpleDateFormat("dd/MM/yyyy_HH:mm:ss").format(Calendar.getInstance().getTime());
+        //temp solution, untill iv and salt will be incorporated into the file itself
+        PrintWriter writer = null;
+        try {
+            writer = new PrintWriter(new File(workingDir + "info.txt"), "UTF-8");
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        writer.println(initIV);
+        writer.println(salt);
+        writer.println("created on: " + timeStamp);
+        writer.close();
+        
+        
+        Long numOfFiles = size / file.length();
+        System.out.println("creating ISO file...");
+        System.out.println(numOfFiles.toString() + " number of copies will be created" );
+        
+        jProgressBar1.setMaximum(numOfFiles.intValue());
+        ic.addFiles(file, numOfFiles);
+
+        
+
+        ic.createISO(new File(workingDir + "Disc.iso"));
+    }
+    
     private void jButton_testActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_testActionPerformed
         
-        JSlider slider  = new LogarithmicJSlider(100, 10000000, 1000);
-                slider.setPaintTicks(true);
-        slider.setPaintLabels(true);
-        slider.setMajorTickSpacing(10);
-        slider.setMinorTickSpacing(10);
-        
-        getContentPane().add(slider);
-       // getContentPane().repaint();
-        //this.add(slider);
+
                
     }//GEN-LAST:event_jButton_testActionPerformed
 

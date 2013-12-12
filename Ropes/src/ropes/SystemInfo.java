@@ -106,7 +106,7 @@ public class SystemInfo {
                   }
                   
               } catch (IOException ex) {
-                  Logger.getLogger(test.class.getName()).log(Level.SEVERE, null, ex);
+                //  Logger.getLogger(tclass.getName()).log(Level.SEVERE, null, ex);
               }
           }
         }
